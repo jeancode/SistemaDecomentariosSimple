@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>File Explorer</title>
+    <style>
+        body.dark {
+            background-color: #1f2937;
+            color: #ffffff;
+        }
+        .file-icon {
+            height: 20px;
+            width: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen">
+        <div class="w-1/4 p-4 shadow-md bg-white dark:bg-gray-800">
+            <div class="space-y-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300">Folders</h3>
+                <div id="folder-list" class="space-y-2 text-gray-700 dark:text-gray-300"></div>
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300">Drives</h3>
+                <div id="drive-list" class="space-y-1"></div>
+            </div>
+        </div>
+        <div class="flex-1 p-4">
+            <div class="mb-4 flex items-center space-x-2">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Search files..."
+                    class="flex-1 border border-gray-300 p-2 rounded-md"
+                />
+                <button class="p-2 border rounded-md" onclick="toggleView('large')">Large View</button>
+                <button class="p-2 border rounded-md" onclick="toggleView('medium')">Medium View</button>
+                <button class="p-2 border rounded-md" onclick="toggleView('list')">List View</button>
+                <button class="p-2 border rounded-md" id="dark-mode-toggle">Toggle Dark Mode</button>
+            </div>
+            <div id="file-grid" class="grid gap-4 grid-cols-3"></div>
+        </div>
+    </div>
+
+    <script>
+        let files = [
+            { name: 'Documents', type: 'folder', size: '--', modified: '2023-07-01' },
+            { name: 'Images', type: 'folder', size: '--', modified: '2023-07-02' },
+            { name: 'report.docx', type: 'document', size: '2.5 MB', modified: '2023-07-03' },
+            { name: 'presentation.pptx', type: 'document', size: '5.1 MB', modified: '2023-07-04' },
+            { name: 'vacation.jpg', type: 'image', size: '3.2 MB', modified: '2023-07-05' },
+            { name: 'profile.png', type: 'image', size: '1.8 MB', modified: '2023-07-06' },
+            { name: 'video.mp4', type: 'multimedia', size: '15.7 MB', modified: '2023-07-07' },
+            { name: 'audio.mp3', type: 'multimedia', size: '4.3 MB', modified: '2023-07-08' },
+        ];
+
+        let drives = [
+            { name: 'Local Disk (C:)', total: 500, used: 350 },
+            { name: 'Data (D:)', total: 1000, used: 600 },
+        ];
+
+        let currentView = 'medium';
+
+        function renderDrives() {
+            const driveList = document.getElementById('drive-list');
+            drives.forEach(drive => {
+                const driveElement = document.createElement('div');
+                driveElement.innerHTML = `
+                    <div class="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                        <span>${drive.name}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                        ${drive.used} GB / ${drive.total} GB
+                    </div>
+                `;
+                driveList.appendChild(driveElement);
+            });
+        }
+
+        function renderFolders() {
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = ''; // Clear existing items
+            files.forEach(file => {
+                if (file.type === 'folder') {
+                    const folderElement = document.createElement('div');
+                    folderElement.className = "flex items-center space-x-2 text-gray-700 dark:text-gray-300 cursor-pointer";
+                    folderElement.innerHTML = `<span>📁 ${file.name}</span>`;
+                    folderList.appendChild(folderElement);
+                }
+            });
+        }
+
+        function renderFiles() {
+            const fileGrid = document.getElementById('file-grid');
+            fileGrid.innerHTML = ''; // Clear existing items
+            files.forEach(file => {
+                const fileElement = document.createElement('div');
+                fileElement.className = `flex items-center space-x-2 border p-2 rounded-lg ${currentView === 'list' ? 'flex-col' : 'flex-row'}`;
+                const icon = getFileIcon(file.type);
+                fileElement.innerHTML = `
+                    <span>${icon} ${file.name}</span>
+                    ${currentView === 'list' ? `<span class="text-gray-500">${file.size}</span>` : ''}
+                    ${currentView === 'list' ? `<span class="text-gray-500">${file.modified}</span>` : ''}
+                `;
+
+                fileElement.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    showContextMenu(e, file); // Show context menu
+                };
+
+                fileGrid.appendChild(fileElement);
+            });
+        }
+
+        function getFileIcon(type) {
+            switch (type) {
+                case 'folder': return '📁';
+                case 'document': return '📄';
+                case 'image': return '🖼️';
+                case 'multimedia': return '🎥';
+                default: return '📄';
+            }
+        }
+
+        function toggleView(view) {
+            currentView = view;
+            renderFiles();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+        }
+
+        document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredFiles = files.filter(file => file.name.toLowerCase().includes(searchTerm));
+            // Update rendered files based on search term
+            renderFiles(filteredFiles);
+        });
+
+        function showContextMenu(event, file) {
+            let contextMenu = document.getElementById('context-menu');
+            if (!contextMenu) {
+                contextMenu = document.createElement('div');
+                contextMenu.id = 'context-menu';
+                contextMenu.className = 'absolute bg-white border border-gray-300 rounded-md shadow-lg z-50';
+                contextMenu.innerHTML = `
+                    <div class="p-2" onclick="alert('Open ${file.name}')">Open</div>
+                    <div class="p-2" onclick="alert('Rename ${file.name}')">Rename</div>
+                    <div class="p-2" onclick="alert('Copy ${file.name}')">Copy</div>
+                    <div class="p-2" onclick="alert('Cut ${file.name}')">Cut</div>
+                    <div class="p-2" onclick="alert('Delete ${file.name}')">Delete</div>
+                    <div class="p-2" onclick="alert('Properties of ${file.name}')">Properties</div>
+                `;
+                document.body.appendChild(contextMenu);
+            }
+
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
+
+            setTimeout(() => {
+                contextMenu.style.display = 'block';
+            }, 0);
+
+            window.addEventListener('click', () => {
+                contextMenu.style.display = 'none';
+                setTimeout(() => {
+                    document.body.removeChild(contextMenu);
+                }, 300);
+            }, { once: true });
+        }
+
+        // Initial render
+        renderDrives();
+        renderFolders();
+        renderFiles();
+    </script>
+</body>
+</html>

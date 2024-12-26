@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Comments</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.0.0/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: sans-serif; 
+        }
+
+        .comment-section {
+            border: 1px solid #333;
+            padding: 0.5rem 0.75rem; 
+            border-radius: 8px;
+            margin-bottom: 1rem; 
+            background-color: #222;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem; 
+        }
+
+        .comment-avatar {
+            width: 30px; 
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 0.5rem; 
+        }
+
+        .comment-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comment-name {
+            font-weight: bold;
+            font-size: 0.8rem; 
+        }
+
+        .comment-time {
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        .comment-body {
+            padding: 0.5rem 0; 
+        }
+
+        .comment-content {
+            background-color: #333;
+            padding: 0.75rem 1rem; 
+            border-radius: 8px;
+            white-space: pre-line; /* Para preservar los saltos de línea */
+        }
+
+        .comment-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+
+        .comment-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin-right: 0.5rem; 
+            color: #aaa;
+        }
+
+        .comment-actions .like-count {
+            margin-left: 0.5rem; 
+            color: #aaa;
+        }
+
+        .comment-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem; 
+        }
+
+        .comment-input textarea {
+            width: calc(100% - 115px); /* Ajustado para el nuevo botón */
+            padding: 0.5rem 0.75rem; 
+            border: 1px solid #333;
+            border-radius: 8px;
+            resize: none;
+            background-color: #333;
+            color: #eee;
+        }
+
+        .comment-input button {
+            background-color: #3b5998;
+            color: white;
+            padding: 0.5rem 1rem; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 0.5rem; 
+        }
+
+        .reply-form {
+            margin-top: 0.75rem;
+            margin-left: 1rem; 
+            border: 1px solid #333;
+            padding: 0.5rem 0.75rem; 
+            border-radius: 8px;
+            background-color: #222;
+        }
+
+        .reply-form textarea {
+            width: calc(100% - 75px); /* Ajustado para el nuevo botón */
+            padding: 0.5rem 0.75rem; 
+            border: 1px solid #333;
+            border-radius: 8px;
+            resize: none;
+            background-color: #333;
+            color: #eee;
+        }
+
+        .reply-form button {
+            background-color: #3b5998;
+            color: white;
+            padding: 0.5rem 1rem; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 0.5rem; 
+        }
+
+        .replies {
+            margin-top: 0.75rem;
+        }
+
+        .reply {
+            margin-left: 1rem; 
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .uploaded-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+        }
+
+        /* Estilo para el botón de imagen */
+        #image-button {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        #image-upload {
+            display: none; 
+        }
+
+        /* Estilo para el botón de imagen en respuestas */
+        #reply-image-button {
+            display: none; /* Ocultar el botón de imagen en respuestas */
+        }
+
+        #reply-image-upload {
+            display: none; /* Ocultar el input de archivo en respuestas */
+        }
+
+        /* Estilo mejorado para el botón Eliminar */
+        .delete-button, .delete-reply-button {
+            background-color: transparent;
+            border: none;
+            color: #f44336; /* Rojo */
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: auto; /* Mueve el botón a la derecha */
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease; /* Transición suave */
+        }
+
+        .delete-button:hover, .delete-reply-button:hover {
+            background-color: rgba(244, 67, 54, 0.2); /* Rojo claro en hover */
+        }
+
+        /* Estilos para el código de programación */
+        .code-container {
+            background-color: #282c34;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        .code-block {
+            font-family: monospace;
+            color: #d4d4d4;
+        }
+
+        /* Estilo para el botón de agregar código */
+        #add-code-button {
+            background-color: #3b5998;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        #code-input {
+            display: none;
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background-color: #333;
+            color: #eee;
+        }
+
+        #code-input textarea {
+            resize: vertical;
+            width: 100%;
+            height: 200px;
+            padding: 0.5rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: #333;
+            color: #eee;
+        }
+
+        #submit-code-button {
+            background-color: #3b5998;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto mt-10">
+        <h2 class="text-2xl font-bold mb-4">Comentarios</h2>
+
+        <div class="comment-input">
+            <textarea id="comment-text" placeholder="Escribe un comentario..."></textarea>
+            <input type="file" id="image-upload" accept="image/*">
+            <button id="image-button">Adjuntar Imagen</button>
+            <button id="comment-button">Comentar</button>
+        </div>
+
+        <div id="comment-container">
+        </div>
+        <button id="add-code-button">Agregar Código</button>
+        <div id="code-input">
+            <textarea id="code-textarea" placeholder="Pega tu código aquí..."></textarea>
+            <button id="submit-code-button">Agregar Código</button>
+        </div>
+
+        <div id="code-container"></div> 
+
+    </div>
+    <script>
+        let comments = [];
+        let codeSnippets = [];
+
+        function escapeHTML(text) {
+            return text
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/"/g, '"')
+                
+        }
+
+        function loadComments() {
+            const commentContainer = document.getElementById('comment-container');
+            commentContainer.innerHTML = '';
+
+            comments.forEach((comment, commentIndex) => {
+                const commentElement = createCommentElement(comment, commentIndex);
+                commentContainer.appendChild(commentElement);
+            });
+        }
+
+        function createCommentElement(comment, commentIndex) {
+            const commentSection = document.createElement('div');
+            commentSection.classList.add('comment-section');
+
+            commentSection.innerHTML = `
+                <div class="comment-header">
+                    <img src="https://via.placeholder.com/40" alt="Avatar" class="comment-avatar">
+                    <div class="comment-info">
+                        <h3 class="comment-name">${escapeHTML(comment.name)}</h3>
+                        <p class="comment-time">${escapeHTML(comment.time)}</p>
+                    </div>
+                    <button class="delete-button" data-comment-index="${commentIndex}">Eliminar</button> 
+                </div>
+                <div class="comment-body">
+                    <div class="comment-content">${marked.parse(escapeHTML(comment.content))}</div> 
+                    <div class="image-container">
+                        ${comment.image ? `<img src="${comment.image}" alt="Imagen del comentario" class="uploaded-image">` : ''} 
+                    </div>
+                    <div class="comment-actions">
+                        <button class="like-button" data-comment-index="${commentIndex}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6z" /></svg>
+                        </button>
+                        <span class="like-count">${comment.likes} me gusta</span>
+                        <button class="reply-button" data-comment-index="${commentIndex}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
+                        </button>
+                    </div>
+                    <div class="reply-form hidden" data-comment-index="${commentIndex}">
+                        <textarea class="reply-textarea" placeholder="Escribe una respuesta..."></textarea>
+                        <button class="reply-submit-button" data-comment-index="${commentIndex}">Responder</button>
+                    </div>
+                    <div class="replies" data-comment-index="${commentIndex}">
+                        ${comment.replies.map((reply, replyIndex) => `
+                            <div class="comment-section reply" data-reply-index="${replyIndex}">
+                                <div class="comment-header">
+                                    <img src="https://via.placeholder.com/40" alt="Avatar" class="comment-avatar">
+                                    <div class="comment-info">
+                                        <h3 class="comment-name">${escapeHTML(reply.name)}</h3>
+                                        <p class="comment-time">${escapeHTML(reply.time)}</p>
+                                    </div>
+                                    <button class="delete-reply-button" data-comment-index="${commentIndex}" data-reply-index="${replyIndex}">Eliminar</button>
+                                </div>
+                                <div class="comment-body">
+                                    <div class="comment-content">${marked.parse(escapeHTML(reply.content))}</div> 
+                                    <div class="image-container">
+                                        ${reply.image ? `<img src="${reply.image}" alt="Imagen de la respuesta" class="uploaded-image">` : ''}
+                                    </div>
+                                    <div class="comment-actions">
+                                        <button class="like-button" data-comment-index="${commentIndex}" data-reply-index="${replyIndex}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zm4.5 0a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6z" /></svg>
+                                        </button>
+                                        <span class="like-count">${reply.likes} me gusta</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            const deleteButton = commentSection.querySelector('.delete-button');
+            deleteButton.addEventListener('click', () => {
+                const commentIndex = parseInt(deleteButton.dataset.commentIndex);
+                comments.splice(commentIndex, 1);
+                saveComments();
+                loadComments();
+            });
+
+            const likeButtons = commentSection.querySelectorAll('.like-button');
+            likeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const commentIndex = button.dataset.commentIndex;
+                    const replyIndex = button.dataset.replyIndex;
+                    if (replyIndex) {
+                        comments[commentIndex].replies[replyIndex].likes++;
+                    } else {
+                        comments[commentIndex].likes++;
+                    }
+                    saveComments();
+                    loadComments();
+                });
+            });
+
+            const replyButton = commentSection.querySelector('.reply-button');
+            const replyForm = commentSection.querySelector('.reply-form');
+            replyButton.addEventListener('click', () => {
+                replyForm.classList.toggle('hidden');
+            });
+
+            const replySubmitButton = commentSection.querySelector('.reply-submit-button');
+            replySubmitButton.addEventListener('click', () => {
+                const replyTextArea = commentSection.querySelector('.reply-textarea');
+                const replyText = replyTextArea.value;
+                const commentIndex = parseInt(replySubmitButton.dataset.commentIndex);
+
+                if (replyText.trim() !== '') {
+                    const newReply = {
+                        name: 'Usuario',
+                        time: 'Ahora',
+                        content: replyText,
+                        likes: 0,
+                        image: '' 
+                    };
+                    comments[commentIndex].replies.push(newReply);
+                    replyTextArea.value = '';
+                    saveComments();
+                    loadComments(); 
+                }
+            });
+
+            const deleteReplyButtons = commentSection.querySelectorAll('.delete-reply-button');
+            deleteReplyButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const commentIndex = parseInt(button.dataset.commentIndex);
+                    const replyIndex = parseInt(button.dataset.replyIndex);
+                    comments[commentIndex].replies.splice(replyIndex, 1);
+                    saveComments();
+                    loadComments();
+                });
+            });
+
+
+            const replyImageButton = commentSection.querySelectorAll('#reply-image-button');
+            replyImageButton.forEach(button => {
+                const commentIndex = parseInt(button.id.replace('reply-image-button-', ''));
+                button.addEventListener('click', () => {
+                    document.getElementById(`reply-image-upload-${commentIndex}`).click();
+                });
+            });
+
+            return commentSection;
+        }
+
+        function saveComments() {
+            localStorage.setItem('comments', JSON.stringify(comments));
+        }
+
+        function addComment() {
+            const commentText = document.getElementById('comment-text').value.trim(); 
+            const imageUpload = document.getElementById('image-upload');
+            const file = imageUpload.files[0];
+            let imageURL = '';
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageURL = e.target.result; 
+                    // Actualiza el comentario con la URL de la imagen
+                    const newComment = {
+                        name: 'Usuario',
+                        time: 'Ahora',
+                        content: escapeHTML(commentText),
+                        likes: 0,
+                        replies: [],
+                        image: imageURL 
+                    };
+                    // Solo agrega el comentario si el texto no está vacío
+                    if (commentText !== '') { 
+                        comments.unshift(newComment);
+                        document.getElementById('comment-text').value = '';
+                        document.getElementById('image-upload').value = '';
+                        saveComments();
+                        loadComments();
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else if (commentText !== '') { 
+                // Si no hay archivo, crea el comentario sin imagen
+                const newComment = {
+                    name: 'Usuario',
+                    time: 'Ahora',
+                    content: escapeHTML(commentText),
+                    likes: 0,
+                    replies: [],
+                    image: ''
+                };
+                comments.unshift(newComment);
+                document.getElementById('comment-text').value = '';
+                document.getElementById('image-upload').value = '';
+                saveComments();
+                loadComments();
+            }
+        }
+
+        const storedComments = localStorage.getItem('comments');
+        if (storedComments) {
+            comments = JSON.parse(storedComments);
+        } else {
+            comments = [
+                {
+                    name: 'Usuario 1',
+                    time: 'Hace 2 horas',
+                    content: 'Este es un comentario de prueba.\n**Con formato en negrita**\n*Con formato en cursiva*',
+                    likes: 5,
+                    replies: [
+                        {
+                            name: 'Usuario 2',
+                            time: 'Hace 1 hora',
+                            content: 'Esta es una respuesta.',
+                            likes: 2
+                        }
+                    ]
+                },
+                {
+                    name: 'Usuario 3',
+                    time: 'Hace 1 hora',
+                    content: 'Otro comentario de prueba.',
+                    likes: 2,
+                    replies: []
+                }
+            ];
+            saveComments();
+        }
+
+        loadComments();
+
+        document.getElementById('comment-button').addEventListener('click', addComment);
+        document.getElementById('image-button').addEventListener('click', function() {
+            document.getElementById('image-upload').click(); 
+        });
+
+        // Agregar código
+        const addCodeButton = document.getElementById('add-code-button');
+        const codeInput = document.getElementById('code-input');
+        const codeTextarea = document.getElementById('code-textarea');
+        const submitCodeButton = document.getElementById('submit-code-button');
+        const codeContainer = document.getElementById('code-container');
+
+        addCodeButton.addEventListener('click', () => {
+            codeInput.style.display = 'block';
+        });
+
+        submitCodeButton.addEventListener('click', () => {
+            const code = codeTextarea.value.trim();
+            if (code !== '') {
+                codeSnippets.push(code);
+                localStorage.setItem('codeSnippets', JSON.stringify(codeSnippets));
+                displayCodeSnippets();
+                codeTextarea.value = ''; 
+                codeInput.style.display = 'none'; 
+            }
+        });
+
+
+        function displayCodeSnippets() {
+            codeContainer.innerHTML = '';
+            codeSnippets.forEach(snippet => {
+                const codeBlock = document.createElement('pre');
+                codeBlock.classList.add('code-block');
+                codeBlock.classList.add('code-container');
+                codeBlock.textContent = snippet; 
+                codeContainer.appendChild(codeBlock);
+            });
+        }
+
+        const storedCodeSnippets = localStorage.getItem('codeSnippets');
+        if (storedCodeSnippets) {
+            codeSnippets = JSON.parse(storedCodeSnippets);
+            displayCodeSnippets();
+        }
+
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.18/marked.min.js"></script>
+</body>
+</html> 

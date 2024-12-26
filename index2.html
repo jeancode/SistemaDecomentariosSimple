@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <title>Conversation</title>
+    <style>
+        body.dark {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .file-icon {
+            height: 24px;
+            width: 24px;
+        }
+        .chat-bubble {
+            max-width: 60%;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .user-bubble {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            align-self: flex-start;
+        }
+        .admin-bubble {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            align-self: flex-end;
+        }
+        #chatareaContente {
+            background: rgb(52, 52, 52);
+        }
+        #screenBack{
+            background: rgb(57, 57, 57);
+        }
+        #sildebarConversation {
+            background-color: #2c2c2c;
+            color: white;
+            border-right:1px solid rgb(83 83 83);
+            min-width: 300px;
+            overflow: hidden;
+        }
+        #chatArea {
+            background: rgb(75, 75, 75);
+        }
+        #addConversation{
+            border-radius: 10px;
+            background: rgb(65, 65, 65);
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        #addConversation:hover{
+           
+            background: rgb(71, 75, 84);
+           
+        }
+        #sildebarConversation{
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 dark:bg-gray-900">
+    <div class="flex h-screen" id="screenBack">
+        <!-- sildebarConversation  DE UN MAXIMO WIDTH DE 300PX-->
+
+        <div id="sildebarConversation" class="w-1/4 bg-gray-200 dark:bg-gray-800 flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Conversations</h2>
+                <button id="themeToggle" class="bg-gray-300 dark:bg-gray-600 rounded-full p-2 hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300">
+                    🌙
+                </button>
+            </div>
+            <button id="addConversation" class=" transition duration-300 mt-4 ml-2 mr-2">Add Conversation</button>
+            <div id="conversationList" class="p-2 flex flex-col space-y-2"></div>
+        </div>
+
+        <!-- Main Chat Area -->
+         <!--chatareaContente width 100% w-100%--> 
+
+        <div id="chatareaContente" class="w-full p-4 flex flex-col hidden">
+            <div id="chatArea" class="flex-grow bg-gray-200 shadow-lg rounded-lg dark:bg-gray-900 p-4 overflow-y-auto space-y-2">
+                <!-- Chat messages will be inserted here -->
+            </div>
+            <div class="flex mt-4">
+                <input type="text" id="chatInput" placeholder="Type your message..." class="border border-gray-300 rounded-lg w-full px-4 py-2 dark:bg-gray-800 dark:text-white" />
+                <button id="sendButton" class="ml-2 bg-gray-500 text-white rounded-lg px-4 py-2 hover:bg-gray-600">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const conversations = []; // Array to store conversations
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            const currentTheme = body.classList.contains('dark') ? 'dark' : 'light';
+            themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙'; // Change icon based on theme
+        });
+
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+        document.getElementById('chatInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        document.getElementById('addConversation').addEventListener('click', addNewConversation);
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const messageText = input.value.trim();
+
+            if (messageText) {
+                // Create user message bubble
+                const userBubble = document.createElement('div');
+                userBubble.className = 'flex';
+                userBubble.innerHTML = `<div class="chat-bubble user-bubble"><span>User: ${messageText}</span></div>`;
+                document.getElementById('chatArea').appendChild(userBubble);
+                
+                // Save the user message
+                saveMessage("User", messageText);
+
+                // Clear the input field
+                input.value = '';
+
+                // Simulate an admin reply after a delay
+                setTimeout(() => {
+                    const adminReply = generateAdminReply(messageText);
+                    const adminBubble = document.createElement('div');
+                    adminBubble.className = 'flex';
+                    adminBubble.innerHTML = `<div class="chat-bubble admin-bubble"><span>Admin: ${adminReply}</span></div>`;
+                    document.getElementById('chatArea').appendChild(adminBubble);
+                    
+                    // Save the admin message
+                    saveMessage("Admin", adminReply);
+                    
+                    scrollToBottom();
+                }, 1000);  // Simulated response delay
+
+                scrollToBottom();
+            }
+        }
+
+        function generateAdminReply(userMessage) {
+            if (userMessage.toLowerCase().includes('upload')) {
+                return 'You can click the upload button at the top right corner.';
+            } else if (userMessage.toLowerCase().includes('hello')) {
+                return 'Hello! How can I assist you today?';
+            } else {
+                return 'I\'m here to help you with your inquiries.';
+            }
+        }
+
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function addNewConversation() {
+            const conversationName = prompt("Enter the name of the new conversation:");
+
+            if (conversationName) {
+                conversations.push({ name: conversationName, messages: [] }); // Create new conversation
+                updateConversationList();
+            }
+        }
+
+        function updateConversationList() {
+            const conversationList = document.getElementById('conversationList');
+            conversationList.innerHTML = ''; // Clear the current list
+
+            conversations.forEach((conversation, index) => {
+                const convoButton = document.createElement('button');
+                convoButton.className = 'bg-gray-800 dark:bg-gray-800 rounded-30 p-2 hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300';
+                convoButton.innerText = conversation.name;
+                convoButton.onclick = () => loadConversation(index);
+                conversationList.appendChild(convoButton);
+            });
+        }
+
+        function loadConversation(index) {
+            const selectedConversation = conversations[index];
+            document.getElementById('chatareaContente').classList.remove('hidden');
+            document.getElementById('chatArea').innerHTML = ''; // Clear previous messages
+
+            // Load existing messages into the chat area
+            selectedConversation.messages.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'flex';
+                bubble.innerHTML = `<div class="chat-bubble ${msg.sender === "User" ? 'user-bubble' : 'admin-bubble'}"><span>${msg.sender}: ${msg.text}</span></div>`;
+                document.getElementById('chatArea').appendChild(bubble);
+            });
+
+            scrollToBottom();
+        }
+
+        function saveMessage(sender, text) {
+            const currentConversationIndex = conversations.length - 1; // Assuming we're always adding to the last conversation
+            conversations[currentConversationIndex].messages.push({ sender, text }); // Save message
+        }
+    </script>
+</body>
+</html>
